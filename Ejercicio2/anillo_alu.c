@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 		}
 	}
 	int pipe_padre[2][2];					//Un pipe para comunicacion padre-start(setup)
-	for (int i = 0;i < n; i++) {			//Otro para start-padre(finish)
+	for (int i = 0;i < 2; i++) {			//Otro para start-padre(finish)
 		if(pipe(pipe_padre[i]) == -1){
 			perror("buh");
 			exit(1);
@@ -54,11 +54,11 @@ int main(int argc, char **argv)
 			int anterior = i-1;
 			int mensaje_inicial;
 			if(i == 0)
-				anterior = n-1;
+				anterior = n-1; 
 			// Cada hijo cierra pipes de pipes_mensajero que no usa
 			for(int j =0;j<n;j++){
 				if(j != i && j != anterior){
-					//Mantengo el read anterior y write actual
+					// Mantengo el read anterior y write actual
 					close(pipe_mensajero[j][READ]);
 					close(pipe_mensajero[j][WRITE]);
 				}
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 				do
 				{
 					numero_secreto = generate_random_number();
-				} while (numero_secreto < mensaje_inicial);
+				} while (numero_secreto <= mensaje_inicial);
 				printf("Numero secreto %d generado\n",numero_secreto);
 				printf("Mensaje inicial %d recibido\n",mensaje_inicial);
 				mensaje_inicial++;
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 				close(pipe_padre[VUELTA][READ]);
 				close(pipe_padre[VUELTA][WRITE]);
 				while(1){
-					if(read(pipe_mensajero[anterior][READ],&mensaje_inicial,sizeof(mensaje_inicial)) == EOF){
+					if(read(pipe_mensajero[anterior][READ],&mensaje_inicial,sizeof(mensaje_inicial)) == 0){
 						break;
 					}
 					printf("Hijo %d recibió %d\n",i,mensaje_inicial);
@@ -123,15 +123,18 @@ int main(int argc, char **argv)
 	}
 
 	close(pipe_padre[IDA][READ]);
+	// Paso inicial
 	write(pipe_padre[IDA][WRITE],&buffer,sizeof(buffer));
+
 	read(pipe_padre[VUELTA][READ],&buffer,sizeof(buffer));
 
 	close(pipe_padre[IDA][WRITE]);
 	close(pipe_padre[VUELTA][READ]);
-	sleep(1);
 
 	printf("Padre recibió finalmente el mensaje %d\n",buffer);
+	for(int i=0;i<n;i++)
+		wait(&status);
+
 	exit(EXIT_SUCCESS);
-    /* COMPLETAR */
 }
 
